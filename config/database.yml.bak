@@ -1,0 +1,27 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: ottodot_development
+  host: localhost
+  username: postgres
+  password: postgres
+  port: 5432
+
+test:
+  <<: *default
+  database: ottodot_test
+  host: localhost
+  username: postgres
+  password: postgres
+  port: 5432
+
+production:
+  <<: *default
+  database: ottodot_production
+  username: ottodot
+  password: <%= ENV["DATABASE_PASSWORD"] %>
