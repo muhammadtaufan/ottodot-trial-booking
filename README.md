@@ -69,7 +69,6 @@ Approximately **3–4 hours**, including:
 ## Assumptions Made
 
 - **No real payment gateway**: Payment processing is mocked via a `PaymentGateway` service. Pass `simulate=fail` to the pay endpoint to test failure scenarios; otherwise, payment succeeds.
-- **No user authentication or authorization**: The API does not require login or verify user identity. In a production system, this would be enforced via an auth layer (e.g., Devise, Pundit policies).
 - **No notifications or emails**: Bookings do not trigger confirmation emails or status notifications.
 - **Capacity is fixed per trial class**: Defaults to 4 students but is configurable per class.
 - **No waitlist or cancellation**: Once a booking exists, it cannot be cancelled. If a seat becomes unavailable due to the race condition, the payment succeeds but the booking is marked `seat_unavailable`; a new booking can be created to retry.
@@ -79,14 +78,6 @@ Approximately **3–4 hours**, including:
 ### Technology Stack
 - **Rails 8.1** monolith with **PostgreSQL 16** database (not SQLite).
 - PostgreSQL was chosen because the duplicate-booking defense leverages a **partial unique index** on `(student_id, trial_class_id) WHERE status = 'confirmed'`, which is cleanly supported by Postgres but not in SQLite.
-
-### Authentication & Authorization — Deliberately Cut
-This implementation intentionally excludes authentication and authorization. There is no login system, no user context, and no access control policies. The API accepts any `student_id` and `trial_class_id` without verification. In production, this would be enforced via:
-- A login layer (e.g., Devise).
-- Authorization policies (e.g., Pundit) restricting parents to their own children and teachers to their assigned classes.
-- Guarding sensitive endpoints with `before_action :authenticate_user!`.
-
-This was cut to focus the exercise on the core booking and concurrency logic within the timeframe.
 
 ### Concurrency & Seat Claiming Strategy
 - **Pessimistic locking** using `trial_class.with_lock` (Rails' `SELECT ... FOR UPDATE`) serializes the critical section where seat availability is checked and a booking is confirmed.
@@ -120,7 +111,6 @@ All booking confirmations happen inside `ActiveRecord::Base.transaction`, ensuri
 
 Given the timeboxed nature of this exercise, the following were intentionally excluded:
 
-- **Authentication & Authorization**: (See "Key Architecture & Backend Decisions" above.)
 - **Email Notifications**: No confirmation or status emails.
 - **Waitlist**: Full classes can only offer the `seat_unavailable` outcome; no queue for the next available slot.
 - **Background Jobs**: No async processing (e.g., email delivery, report generation).
@@ -152,18 +142,11 @@ To ensure the system's correctness and health, monitor the following:
 
 3. **Stale booking cleanup**: A background job to auto-expire bookings stuck in `pending_payment` for more than (e.g.) 30 minutes, freeing the student to try again without admin intervention.
 
-4. **Authentication**: Integrate Devise or a custom auth layer so that each parent can only create and view bookings for their own children.
+4. **Waitlist**: For full classes, allow students to join a waitlist. If a confirmed booking is cancelled (future), automatically confirm the next waitlist student.
 
-5. **Authorization policies**: Implement Pundit-style policies:
-   - Parents can view/create bookings only for their students.
-   - Teachers can view the roster for their assigned trial classes.
-   - Admins can view and modify any booking.
+5. **Notifications**: Email confirmations, payment receipts, and "a seat opened up" alerts to waitlisted parents.
 
-6. **Waitlist**: For full classes, allow students to join a waitlist. If a confirmed booking is cancelled (future), automatically confirm the next waitlist student.
-
-7. **Notifications**: Email confirmations, payment receipts, and "a seat opened up" alerts to waitlisted parents.
-
-8. **Audit logging**: Store a log of all state changes (booking creation, payment attempts, status transitions) for compliance and debugging.
+6. **Audit logging**: Store a log of all state changes (booking creation, payment attempts, status transitions) for compliance and debugging.
 
 ## Last-Seat Race: Approach, Rationale, and Tradeoffs
 
