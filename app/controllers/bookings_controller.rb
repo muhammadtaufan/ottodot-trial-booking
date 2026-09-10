@@ -1,6 +1,22 @@
 class BookingsController < ApplicationController
-  # JSON-only API, no cookie-based session auth — CSRF protection has nothing to forge against here.
-  skip_forgery_protection
+  # JSON API requests don't send CSRF tokens (no cookie-based session auth).
+  # HTML form requests include CSRF tokens automatically via Rails form helpers.
+  # Use before_action to conditionally skip CSRF verification for JSON-only requests.
+  before_action :skip_csrf_for_json_api
+  before_action :default_to_json_format
+
+  private
+
+  def skip_csrf_for_json_api
+    # Skip CSRF verification only for JSON API requests
+    # This allows the JSON endpoints to work without CSRF tokens while HTML forms
+    # still verify tokens (Rails default protect_from_forgery behavior)
+    skip_forgery_protection if request.format.json? ||
+                              (params[:format].nil? &&
+                               request.content_type&.include?("application/json"))
+  end
+
+  public
 
   def create
     booking_params = params.permit(:student_id, :trial_class_id)
@@ -15,7 +31,7 @@ class BookingsController < ApplicationController
     )
 
     if existing_confirmed
-      return render json: {
+      error_response = {
         errors: [
           {
             status: "409",
@@ -23,7 +39,15 @@ class BookingsController < ApplicationController
             detail: "A confirmed booking already exists for this student and trial class"
           }
         ]
-      }, status: :conflict
+      }
+
+      if request.format.html?
+        flash[:alert] = "A confirmed booking already exists for this student and trial class"
+        redirect_to trial_classes_path(format: :html)
+      else
+        render json: error_response, status: :conflict
+      end
+      return
     end
 
     booking = Booking.create!(
@@ -32,14 +56,25 @@ class BookingsController < ApplicationController
       status: :pending_payment
     )
 
-    render json: { data: booking_data(booking) }, status: :created
+    if request.format.html?
+      redirect_to booking_path(booking, format: :html)
+    else
+      render json: { data: booking_data(booking) }, status: :created
+    end
   end
 
   def show
     booking = Booking.find(params[:id])
-    render json: { data: booking_data(booking) }
+
+    if request.format.html?
+      @booking = booking
+      @trial_class = booking.trial_class
+      @student = booking.student
+    else
+      render json: { data: booking_data(booking) }
+    end
   rescue ActiveRecord::RecordNotFound
-    render json: {
+    error_response = {
       errors: [
         {
           status: "404",
@@ -47,16 +82,31 @@ class BookingsController < ApplicationController
           detail: "Booking not found"
         }
       ]
-    }, status: :not_found
+    }
+
+    if request.format.html?
+      flash[:alert] = "Booking not found"
+      redirect_to trial_classes_path(format: :html)
+    else
+      render json: error_response, status: :not_found
+    end
   end
 
   def pay
     booking = Booking.find(params[:id])
     simulate_param = params.permit(:simulate).fetch(:simulate, "success")
     confirmed_booking = Booking::Confirmation.new(booking, simulate: simulate_param).call
-    render json: { data: booking_data(confirmed_booking) }
+
+    if request.format.html?
+      @booking = confirmed_booking
+      @trial_class = confirmed_booking.trial_class
+      @student = confirmed_booking.student
+      render :show
+    else
+      render json: { data: booking_data(confirmed_booking) }
+    end
   rescue ActiveRecord::RecordNotFound
-    render json: {
+    error_response = {
       errors: [
         {
           status: "404",
@@ -64,7 +114,14 @@ class BookingsController < ApplicationController
           detail: "Booking not found"
         }
       ]
-    }, status: :not_found
+    }
+
+    if request.format.html?
+      flash[:alert] = "Booking not found"
+      redirect_to trial_classes_path(format: :html)
+    else
+      render json: error_response, status: :not_found
+    end
   end
 
   private

@@ -1,4 +1,6 @@
 class TrialClassesController < ApplicationController
+  before_action :default_to_json_format
+
   def index
     trial_classes = TrialClass.all
     confirmed_counts = Booking.confirmed.group(:trial_class_id).count
@@ -14,7 +16,14 @@ class TrialClassesController < ApplicationController
       }
     end
 
-    render json: { data: data }
+    if request.format.html?
+      @trial_classes = trial_classes.zip(data).map do |model, info|
+        model.tap { |tc| tc.define_singleton_method(:seats_remaining) { info[:seats_remaining] } }
+      end
+      @parents = Parent.all.includes(:students)
+    else
+      render json: { data: data }
+    end
   end
 
   def roster
@@ -26,6 +35,11 @@ class TrialClassesController < ApplicationController
       }
     end
 
-    render json: { data: students }
+    if request.format.html?
+      @trial_class = trial_class
+      @students = trial_class.bookings.confirmed.includes(:student)
+    else
+      render json: { data: students }
+    end
   end
 end
