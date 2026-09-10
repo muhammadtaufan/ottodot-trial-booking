@@ -79,6 +79,29 @@ Approximately **3–4 hours**, including:
 - **Rails 8.1** monolith with **PostgreSQL 16** database (not SQLite).
 - PostgreSQL was chosen because the duplicate-booking defense leverages a **partial unique index** on `(student_id, trial_class_id) WHERE status = 'confirmed'`, which is cleanly supported by Postgres but not in SQLite.
 
+### Data Model
+
+5 tables, kept deliberately small — no fields beyond what the booking/payment/roster flow actually needs:
+
+| Table | Key fields | Notes |
+|---|---|---|
+| `parents` | `name`, `email` | |
+| `students` | `name`, `parent_id` | belongs_to `parents` |
+| `trial_classes` | `subject`, `starts_at`, `capacity` (default 4) | |
+| `bookings` | `student_id`, `trial_class_id`, `status` (enum, see below) | unique index on `(student_id, trial_class_id) WHERE status = 'confirmed'` |
+| `payment_attempts` | `booking_id`, `status` (`succeeded`/`failed`), `note` | one row per `pay` call, regardless of outcome |
+
+```
+parents 1──* students 1──* bookings *──1 trial_classes
+                              │
+                              1
+                              │
+                              *
+                       payment_attempts
+```
+
+Seat availability is never stored as a column — it's always `trial_class.capacity - trial_class.bookings.confirmed.count`, computed live. See `db/schema.rb` for the full generated schema (column types, indexes, foreign keys).
+
 ### Concurrency & Seat Claiming Strategy
 - **Pessimistic locking** using `trial_class.with_lock` (Rails' `SELECT ... FOR UPDATE`) serializes the critical section where seat availability is checked and a booking is confirmed.
 - **Single source of truth for seat count**: The number of confirmed bookings is computed live via a SQL count (`trial_class.bookings.confirmed.count`), not stored in a separate column. This avoids the complexity of decrementing a counter on cancellation and reduces the risk of skew between the actual bookings and a cached seat count.
@@ -106,6 +129,15 @@ All booking confirmations happen inside `ActiveRecord::Base.transaction`, ensuri
 - Payment is recorded.
 - If payment fails, the booking is marked `payment_failed` and the transaction rolls back (no seat is lost).
 - If payment succeeds, the trial class is locked, the confirmed count is checked, and the booking status is updated—all before the transaction commits.
+
+### Which Checks Belong Where
+
+| Layer | Checks it owns | Why here, not elsewhere |
+|---|---|---|
+| **UI / client** | Required-field presence (student + class selected before submit) | Cosmetic only — saves a round trip, never trusted as the real check. Every one of these is re-checked server-side. |
+| **Backend (controller/service)** | Duplicate-confirmed-booking check on create; payment outcome branching; seat-count-vs-capacity decision | This is where the actual business invariants live — the backend is the only layer that can see the full current state (other pending requests, current DB state) at decision time. |
+| **Database** | Partial unique index on `(student_id, trial_class_id) WHERE status = 'confirmed'`; row lock (`SELECT ... FOR UPDATE`) on `trial_classes` during seat-claim; foreign keys on all associations | Backstops the backend check for the two invariants that must hold even under concurrent requests or a bypassed app layer — a unique index can't be raced around, and the lock is what actually serializes the last-seat decision. The app-level duplicate check alone would have a race window; the DB constraint closes it. |
+| **Background job** | None in this implementation | Nothing here needs to be async for the brief's scope — payment is mocked and synchronous, so there's no external call to offload. The "What You'd Do Next" section below lists where a job would make sense (stale `pending_payment` cleanup, notifications) if this went further. |
 
 ## What Was Deliberately Cut
 
