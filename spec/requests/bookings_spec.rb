@@ -196,19 +196,19 @@ RSpec.describe "Bookings API", type: :request do
         results = {}
         threads = []
 
-        # Thread A attempts payment
+        # Thread A attempts payment - call service object directly to bypass shared session
         threads << Thread.new do
           ActiveRecord::Base.connection_pool.with_connection do
-            post "/bookings/#{booking_a.id}/pay", params: { simulate: "success" }
+            Booking::Confirmation.new(booking_a, simulate: "success").call
             booking_a.reload
             results[:a_status] = booking_a.status
           end
         end
 
-        # Thread B attempts payment
+        # Thread B attempts payment - call service object directly to bypass shared session
         threads << Thread.new do
           ActiveRecord::Base.connection_pool.with_connection do
-            post "/bookings/#{booking_b.id}/pay", params: { simulate: "success" }
+            Booking::Confirmation.new(booking_b, simulate: "success").call
             booking_b.reload
             results[:b_status] = booking_b.status
           end
