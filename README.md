@@ -31,7 +31,7 @@ A Rails 8 backend for a trial class booking system where parents can book trial 
    ```bash
    bin/rails s
    ```
-   The API will be available at `http://localhost:3000`
+   Open `http://localhost:3000` in a browser for the booking UI, or hit the JSON API directly (same URLs — content negotiation picks the format from the `Accept` header).
 
 4. **Run tests:**
    ```bash
@@ -49,6 +49,7 @@ A trial booking system with the following features:
 - **Teacher/admin roster view**: View which students are confirmed for a specific trial class.
 - **Seat capacity management**: Each trial class has a fixed capacity (default 4 seats); once full, subsequent bookings are marked `seat_unavailable` rather than confirmed.
 - **Duplicate-booking prevention**: A student cannot have more than one confirmed booking for the same trial class.
+- **Web UI**: A minimal server-rendered UI (Turbo + plain CSS, no JS framework) covering the full flow — browse classes, book, pay, see status, view the roster. Every endpoint still serves JSON as before; the same URL returns HTML or JSON based on the `Accept` header (or an explicit `.html`/`.json` suffix). The UI is a thin presentation layer over the same controllers/JSON responses below — no business logic lives in the views.
 
 ### API Endpoints
 
@@ -148,7 +149,6 @@ Given the timeboxed nature of this exercise, the following were intentionally ex
 - **Background Jobs**: No async processing (e.g., email delivery, report generation).
 - **Cancellation Flow**: No endpoint to cancel a confirmed booking. This would require a `cancelled` status, a refund/void mechanism, and reversal logic.
 - **Real Payment Gateway Integration**: Only a mock payment processor.
-- **Web UI**: This is an API-only backend. Clients would integrate via HTTP requests.
 - **Idempotency Keys**: No protection against duplicate payments if a client retries the pay endpoint.
 - **Soft Deletes**: No support for recovering deleted bookings or students.
 
