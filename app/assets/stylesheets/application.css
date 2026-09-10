@@ -8,3 +8,254 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  color: #333;
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
+}
+
+/* Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.section-card {
+  background-color: #f5f5f5;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 30px;
+}
+
+/* Typography */
+h1 {
+  font-size: 32px;
+  margin: 0 0 20px 0;
+  color: #1976d2;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 20px 0 15px 0;
+  color: #1976d2;
+}
+
+h3 {
+  font-size: 18px;
+  margin: 15px 0 10px 0;
+  color: #333;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+thead {
+  background-color: #f5f5f5;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: #f0f0f0;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  max-width: 500px;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+form {
+  max-width: 500px;
+}
+
+/* Buttons */
+button,
+input[type="submit"],
+a.button {
+  padding: 10px 20px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+button:hover,
+input[type="submit"]:hover,
+a.button:hover {
+  background-color: #1565c0;
+}
+
+button:active,
+input[type="submit"]:active {
+  opacity: 0.9;
+}
+
+/* Status indicators */
+.status-confirmed {
+  background-color: #c8e6c9;
+  border-left: 4px solid #4caf50;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.status-confirmed strong {
+  color: #2e7d32;
+}
+
+.status-pending {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.status-pending strong {
+  color: #1565c0;
+}
+
+.status-failed {
+  background-color: #ffcdd2;
+  border-left: 4px solid #f44336;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.status-failed strong {
+  color: #d32f2f;
+}
+
+.status-unavailable {
+  background-color: #fff3cd;
+  border-left: 4px solid #ff9800;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.status-unavailable strong {
+  color: #e65100;
+}
+
+/* Links */
+a {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Alert messages */
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.alert.error {
+  background-color: #ffcdd2;
+  color: #d32f2f;
+  border: 1px solid #f44336;
+}
+
+.alert.notice {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+/* Utility */
+hr {
+  margin: 40px 0;
+  border: none;
+  border-top: 1px solid #ddd;
+}
+
+.full-width {
+  max-width: 100% !important;
+}
+
+.container-narrow {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.text-muted {
+  color: #666;
+  font-style: italic;
+}
+
+.status-full-badge {
+  color: #d32f2f;
+}
+
+/* Button variants */
+button.btn-success {
+  background-color: #4caf50;
+}
+
+button.btn-success:hover {
+  background-color: #388e3c;
+}

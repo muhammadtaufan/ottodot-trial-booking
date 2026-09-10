@@ -1,0 +1,79 @@
+<% content_for :title, "Booking Status" %>
+
+<div class="container-narrow">
+  <h1>Booking Status</h1>
+
+  <div class="section-card">
+    <h2><%= @trial_class.subject %></h2>
+    <p>
+      <strong>Starts:</strong> <%= @trial_class.starts_at.strftime("%B %d, %Y at %l:%M %p") %>
+    </p>
+    <p>
+      <strong>Capacity:</strong> <%= @trial_class.capacity %>
+    </p>
+  </div>
+
+  <div class="section-card">
+    <h3>Student: <%= @student.name %></h3>
+  </div>
+
+  <div class="section-card">
+    <h3>Booking Status</h3>
+
+    <% status_class = case @booking.status
+        when 'confirmed'
+          'status-confirmed'
+        when 'payment_failed'
+          'status-failed'
+        when 'seat_unavailable'
+          'status-unavailable'
+        when 'pending_payment'
+          'status-pending'
+        else
+          ''
+      end %>
+
+    <div class="<%= status_class %>">
+      <% if @booking.status == 'confirmed' %>
+        ✓ <strong>Confirmed</strong>
+        <p>Your booking has been confirmed. You are enrolled in this trial class.</p>
+      <% elsif @booking.status == 'payment_failed' %>
+        ✗ <strong>Payment Failed</strong>
+        <p>Your payment could not be processed. Please try again.</p>
+      <% elsif @booking.status == 'seat_unavailable' %>
+        ! <strong>Seat Unavailable</strong>
+        <p>Payment was successful, but the class is now full. Your seat was not available.</p>
+      <% elsif @booking.status == 'pending_payment' %>
+        ⏳ <strong>Pending Payment</strong>
+        <p>Your booking is created but awaiting payment.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @booking.status == 'pending_payment' %>
+    <h3>Complete Payment</h3>
+    <p>To finalize your booking, complete the payment below. Select the payment simulation mode for demo purposes.</p>
+
+    <form method="post" action="<%= pay_booking_path(@booking, format: :html) %>">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+
+      <div class="form-group">
+        <label for="simulate">Payment Simulation:</label>
+        <select id="simulate" name="simulate">
+          <option value="success">Success - Confirm Booking</option>
+          <option value="fail">Fail - Payment Declined</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-success">
+        Process Payment
+      </button>
+    </form>
+  <% end %>
+
+  <hr>
+
+  <p>
+    <%= link_to "← Back to Classes", trial_classes_path(format: :html) %>
+  </p>
+</div>

@@ -1,0 +1,78 @@
+<% content_for :title, "Trial Classes" %>
+
+<div class="container">
+  <h1>Trial Classes</h1>
+
+  <% if @trial_classes.empty? %>
+    <p>No trial classes available.</p>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Starts At</th>
+          <th>Capacity</th>
+          <th>Seats Remaining</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @trial_classes.each do |trial_class| %>
+          <tr>
+            <td><%= trial_class.subject %></td>
+            <td><%= trial_class.starts_at.strftime("%B %d, %Y at %l:%M %p") %></td>
+            <td><%= trial_class.capacity %></td>
+            <td>
+              <strong><%= trial_class.seats_remaining %></strong>
+              <% if trial_class.seats_remaining == 0 %>
+                <span class="status-full-badge">(Full)</span>
+              <% end %>
+            </td>
+            <td>
+              <%= link_to "View Roster", roster_trial_class_path(trial_class, format: :html) %>
+              <% if trial_class.seats_remaining > 0 %>
+                <%= link_to "Book", "#book-form" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <hr>
+
+  <h2 id="book-form">Book a Trial Class</h2>
+
+  <form method="post" action="<%= bookings_path(format: :html) %>">
+    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+
+    <div class="form-group">
+      <label for="student_id">Select Student:</label>
+      <select id="student_id" name="student_id" required>
+        <option value="">-- Choose a Student --</option>
+        <% @parents.each do |parent| %>
+          <optgroup label="<%= parent.name %>">
+            <% parent.students.each do |student| %>
+              <option value="<%= student.id %>"><%= student.name %></option>
+            <% end %>
+          </optgroup>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="trial_class_id">Select Trial Class:</label>
+      <select id="trial_class_id" name="trial_class_id" required>
+        <option value="">-- Choose a Class --</option>
+        <% @trial_classes.each do |trial_class| %>
+          <% if trial_class.seats_remaining > 0 %>
+            <option value="<%= trial_class.id %>"><%= trial_class.subject %> (starts <%= trial_class.starts_at.strftime("%b %d") %>)</option>
+          <% end %>
+        <% end %>
+      </select>
+    </div>
+
+    <button type="submit">Create Booking</button>
+  </form>
+</div>

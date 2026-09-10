@@ -1,0 +1,47 @@
+<% content_for :title, "Class Roster - #{@trial_class.subject}" %>
+
+<div class="container-narrow">
+  <h1>Trial Class Roster</h1>
+
+  <div class="section-card">
+    <h2><%= @trial_class.subject %></h2>
+    <p>
+      <strong>Starts:</strong> <%= @trial_class.starts_at.strftime("%B %d, %Y at %l:%M %p") %>
+    </p>
+    <p>
+      <strong>Capacity:</strong> <%= @trial_class.capacity %>
+    </p>
+    <p>
+      <strong>Confirmed Students:</strong> <%= @students.count %> / <%= @trial_class.capacity %>
+    </p>
+  </div>
+
+  <h3>Confirmed Students</h3>
+
+  <% if @students.empty? %>
+    <p class="text-muted">No confirmed bookings yet.</p>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Booked On</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @students.each do |booking| %>
+          <tr>
+            <td><%= booking.student.name %></td>
+            <td><%= booking.created_at.strftime("%B %d, %Y at %l:%M %p") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <hr>
+
+  <p>
+    <%= link_to "← Back to Classes", trial_classes_path(format: :html) %>
+  </p>
+</div>
