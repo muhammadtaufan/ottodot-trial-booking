@@ -6,14 +6,13 @@ GET http://localhost:3000/trial_classes/2/roster
 
 ### Create a booking for a fresh student+class pair -> pending_payment
 # Response includes the new booking's id — use it in the two requests below.
+# Note: student_id/trial_class_id are top-level params, not nested under "booking".
 POST http://localhost:3000/bookings
 Content-Type: application/json
 
 {
-  "booking": {
-    "student_id": 5,
-    "trial_class_id": 1
-  }
+  "student_id": 5,
+  "trial_class_id": 1
 }
 
 ### Pay for the booking above, simulating success -> confirmed
@@ -43,8 +42,6 @@ POST http://localhost:3000/bookings
 Content-Type: application/json
 
 {
-  "booking": {
-    "student_id": 1,
-    "trial_class_id": 1
-  }
+  "student_id": 1,
+  "trial_class_id": 1
 }

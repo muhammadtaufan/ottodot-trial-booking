@@ -1,19 +1,16 @@
 class BookingsController < ApplicationController
-  # JSON API requests don't send CSRF tokens (no cookie-based session auth).
-  # HTML form requests include CSRF tokens automatically via Rails form helpers.
-  # Use before_action to conditionally skip CSRF verification for JSON-only requests.
-  before_action :skip_csrf_for_json_api
+  # JSON API requests are stateless (no cookie-based session auth) and never send a
+  # CSRF token. verify_authenticity_token is registered on ActionController::Base
+  # ahead of any before_action this controller defines, so a later before_action
+  # can't retroactively skip it — this has to be skip_before_action.
+  skip_before_action :verify_authenticity_token, if: :json_api_request?
   before_action :default_to_json_format
 
   private
 
-  def skip_csrf_for_json_api
-    # Skip CSRF verification only for JSON API requests
-    # This allows the JSON endpoints to work without CSRF tokens while HTML forms
-    # still verify tokens (Rails default protect_from_forgery behavior)
-    skip_forgery_protection if request.format.json? ||
-                              (params[:format].nil? &&
-                               request.content_type&.include?("application/json"))
+  def json_api_request?
+    request.format.json? ||
+      (params[:format].nil? && request.content_type&.include?("application/json"))
   end
 
   public
