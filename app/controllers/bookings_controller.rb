@@ -1,4 +1,7 @@
 class BookingsController < ApplicationController
+  # JSON-only API, no cookie-based session auth — CSRF protection has nothing to forge against here.
+  skip_forgery_protection
+
   def create
     booking_params = params.permit(:student_id, :trial_class_id)
     student_id = booking_params.require(:student_id)
