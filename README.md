@@ -148,6 +148,16 @@ To ensure the system's correctness and health, monitor the following:
 
 6. **Audit logging**: Store a log of all state changes (booking creation, payment attempts, status transitions) for compliance and debugging.
 
+7. **API versioning**: Namespace routes under `/api/v1/` before any external client depends on the current shape, so breaking changes (e.g. status enum additions) don't require a coordinated client migration later.
+
+8. **Caching for read-heavy endpoints**: `GET /trial_classes` recomputes `seats_remaining` from a live `COUNT` on every request. Under real traffic this is the first thing to cache — a short-TTL Redis cache invalidated on booking confirmation, or at minimum an `ETag`/conditional-GET so clients polling for seat availability don't re-fetch the full payload every time.
+
+9. **More targeted indexing under load**: the current schema indexes `trial_class_id` and `student_id` individually. The hot-path query (`trial_class.bookings.confirmed.count`, run inside the lock on every `pay` call) would benefit from a composite index on `(trial_class_id, status)` once there's real write volume — it's not needed at this dataset size but is the first index to add before the lock's hold time starts to matter.
+
+10. **Pagination**: `GET /trial_classes` and the roster endpoint return full result sets. Fine at seed-data scale; would need cursor or offset pagination once a deployment has more than a handful of classes or a roster grows past a page.
+
+11. **Lock contention handling at higher scale**: the pessimistic lock (see tradeoffs above) assumes low-to-moderate contention. At genuinely high concurrent-payment volume for the same class, the next step would be either a bounded retry-with-backoff around the lock acquisition (instead of letting a request hang/timeout) or moving the seat-claim into a queued worker that processes confirmations for a given class serially.
+
 ## Last-Seat Race: Approach, Rationale, and Tradeoffs
 
 ### The Problem
