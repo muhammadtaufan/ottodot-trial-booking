@@ -1,0 +1,50 @@
+### List trial classes with seats remaining
+GET http://localhost:3000/trial_classes
+
+### Roster for the boundary-case class (3 confirmed students, seeded via db:seed)
+GET http://localhost:3000/trial_classes/2/roster
+
+### Create a booking for a fresh student+class pair -> pending_payment
+# Response includes the new booking's id — use it in the two requests below.
+POST http://localhost:3000/bookings
+Content-Type: application/json
+
+{
+  "booking": {
+    "student_id": 5,
+    "trial_class_id": 1
+  }
+}
+
+### Pay for the booking above, simulating success -> confirmed
+# Replace :id with the id returned by the create call above.
+POST http://localhost:3000/bookings/:id/pay
+Content-Type: application/json
+
+{
+  "simulate": "success"
+}
+
+### Pay for a (different) booking, simulating failure -> payment_failed
+# Create another fresh booking first, then replace :id here.
+POST http://localhost:3000/bookings/:id/pay
+Content-Type: application/json
+
+{
+  "simulate": "fail"
+}
+
+### Check a booking's current status
+GET http://localhost:3000/bookings/:id
+
+### Duplicate booking attempt: seeded student already confirmed in this class -> 409
+# Alice Student A (student_id 1) already has a confirmed booking in class_1 (Math Basics) via db:seed.
+POST http://localhost:3000/bookings
+Content-Type: application/json
+
+{
+  "booking": {
+    "student_id": 1,
+    "trial_class_id": 1
+  }
+}
