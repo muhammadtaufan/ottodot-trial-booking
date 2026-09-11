@@ -95,10 +95,7 @@ class BookingsController < ApplicationController
     confirmed_booking = Booking::Confirmation.new(booking, simulate: simulate_param).call
 
     if request.format.html?
-      @booking = confirmed_booking
-      @trial_class = confirmed_booking.trial_class
-      @student = confirmed_booking.student
-      render :show
+      redirect_to booking_path(confirmed_booking, format: :html)
     else
       render json: { data: booking_data(confirmed_booking) }
     end
